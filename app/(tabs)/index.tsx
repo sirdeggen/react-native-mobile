@@ -1,23 +1,26 @@
 import { Image, StyleSheet } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
-import { useKey } from '@/hooks/useKey';
-import { PrivateKey } from '@bsv/sdk';
-
+import getKey from '@/app/crypto/secureKey';
 import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { useEffect, useState } from 'react';
 
 export default function HomeScreen() {
-  const str = useKey();
-  const [key, setKey] = useState(PrivateKey.fromRandom());
-  useEffect(() => {
-      storeKeyInSecureEnclave().then((key) => {
-          setKey(key);
-      });
+  const [display, setDisplay] = useState({ wif: 'ok', address: 'now what' });
+    async function displayKey() {
+        console.log('displayKey');
+        const key = await getKey();
+        console.log(key);
+        setDisplay({ wif: key.toWif(), address: key.toAddress() });
+    }
+
+    useEffect(() => {
+        displayKey();
     }, []);
-  return (
-    <ParallaxScrollView
+
+    return <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
       headerImage={
         <Image
@@ -32,18 +35,17 @@ export default function HomeScreen() {
         <ThemedText type="title">Local Device Wallet</ThemedText>
         <HelloWave />
       </ThemedView>
-      {!!key && <ThemedView style={styles.stepContainer}>
+      {!!display && <ThemedView style={styles.stepContainer}>
         <ThemedText type="subtitle">SPV First</ThemedText>
-        <ThemedText selectable>
-          {key.toWif()}
+        <ThemedText selectable style={{ color: 'white' }}>
+          Goose: {display.wif}
         </ThemedText>
         <ThemedText selectable>
-          {key.toAddress()}
+          {display.address}
         </ThemedText>
-        <QRCode value={key.toAddress()} size={150} />
+        <QRCode value={display.address} size={150} />
       </ThemedView>}
     </ParallaxScrollView>
-  );
 }
 
 const styles = StyleSheet.create({
