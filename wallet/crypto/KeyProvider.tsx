@@ -2,7 +2,7 @@ import { PrivateKey } from '@bsv/sdk';
 import * as SecureStore from 'expo-secure-store';
 import * as LocalAuthentication from 'expo-local-authentication';
 import 'react-native-get-random-values';
-import { createContext, useEffect, useState } from 'react';
+import { createContext, useEffect, useMemo, useState } from 'react';
 
 class SecureDataStore {
     /**
@@ -39,28 +39,37 @@ class SecureDataStore {
     }
 }
 
-export const KeyContext = createContext<PrivateKey | null>(null);
+interface KeyContextType {
+    key: PrivateKey | null;
+    authenticate: () => Promise<void>;
+}
+
+export const KeyContext = createContext<KeyContextType>({
+    key: null,
+    authenticate: async () => {},
+});
 
 export default function KeyProvider({ children }: { children: React.ReactNode }) {
     const [key, setKey] = useState<PrivateKey | null>(null);
 
-    async function getKey() {
-        // Try to retrieve the stored key with biometric authentication.
-        const credentials = await SecureDataStore.getItem('key');
-        console.log({ credentials });
-        if (credentials) {
-            setKey(PrivateKey.fromWif(credentials));
-        } else {
-            // Generate and store a new key with biometric access control.
-            const newKey = PrivateKey.fromRandom();
-            await SecureDataStore.storeItem('key', newKey.toWif());
-            setKey(newKey);
+    async function authenticate() {
+        try {
+            // Try to retrieve the stored key with biometric authentication.
+            const hexKey = await SecureDataStore.getItem('key');
+            if (hexKey) {
+                setKey(PrivateKey.fromHex(hexKey));
+            } else {
+                // Generate and store a new key with biometric access control.
+                const newKey = PrivateKey.fromRandom();
+                await SecureDataStore.storeItem('key', newKey.toHex());
+                setKey(newKey);
+            }
+        } catch (error) {
+            console.log({ error });
         }
     }
 
-    useEffect(() => {
-        getKey();
-    }, []);
+    const value = useMemo(() => ({ key, authenticate }), [key]);
 
-    return <KeyContext.Provider value={key}>{children}</KeyContext.Provider>;
+    return <KeyContext.Provider value={value}>{children}</KeyContext.Provider>;
 }

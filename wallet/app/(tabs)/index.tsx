@@ -4,20 +4,13 @@ import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { useState, useEffect } from 'react';
-import getKey from '@/crypto/secureKey';
+import { useContext } from 'react';
+import { KeyContext } from '@/crypto/KeyProvider';
+import QRCode from 'react-native-qrcode-svg';
 
 export default function HomeScreen() {
-  const [data, setData] = useState({ address: '', wif: '' });
-
-  useEffect(() => {
-    console.log('running useEffect');
-   getKey().then((key) => {
-      console.log(key.toAddress());
-      setData({ address: key.toAddress(), wif: key.toWif() });
-    }).catch(console.log);
-  }, []);
-
+  const ctx = useContext(KeyContext);
+  const data = ctx.key ? { identityKey: ctx.key.toPublicKey().toString() } : { identityKey: '' };
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
@@ -31,26 +24,13 @@ export default function HomeScreen() {
         <ThemedText type="title">Welcome!</ThemedText>
         <HelloWave />
       </ThemedView>
+      <ThemedText onPress={ctx.authenticate} style={{ color: '#fff' }}>Authenticate</ThemedText>
       <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Go: {data.address}</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12'
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          -
-        </ThemedText>
+        <ThemedText type="subtitle">{data.identityKey}</ThemedText>
+        <QRCode
+          value={data.identityKey || 'N/A'}
+          size={200}
+        />
       </ThemedView>
     </ParallaxScrollView>
   );
