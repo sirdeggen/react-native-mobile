@@ -1,8 +1,9 @@
-import { PrivateKey } from '@bsv/sdk';
+import { PrivateKey, KeyDeriver } from '@bsv/sdk';
 import * as SecureStore from 'expo-secure-store';
 import * as LocalAuthentication from 'expo-local-authentication';
 import 'react-native-get-random-values';
-import { createContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useMemo, useState } from 'react';
+import { WalletStorageManager, Wallet, StorageClient, Services } from '@bsv/wallet-toolbox-client';
 
 class SecureDataStore {
     /**
@@ -54,16 +55,52 @@ export default function KeyProvider({ children }: { children: React.ReactNode })
 
     async function authenticate() {
         try {
+            let key
             // Try to retrieve the stored key with biometric authentication.
             const hexKey = await SecureDataStore.getItem('key');
             if (hexKey) {
-                setKey(PrivateKey.fromHex(hexKey));
+                key = PrivateKey.fromHex(hexKey)
+                setKey(key);
             } else {
                 // Generate and store a new key with biometric access control.
-                const newKey = PrivateKey.fromRandom();
-                await SecureDataStore.storeItem('key', newKey.toHex());
-                setKey(newKey);
+                key = PrivateKey.fromRandom();
+                await SecureDataStore.storeItem('key', key.toHex());
+                setKey(key);
             }
+
+            const chain = 'main'
+            const endpointUrl = 'https://store.txs.systems'
+            const rootKey = key
+            const keyDeriver = new KeyDeriver(rootKey)
+            const identityKey = keyDeriver.identityKey
+            const storage = new WalletStorageManager(identityKey)
+            const services = new Services(chain)
+            const wallet = new Wallet({
+                chain,
+                keyDeriver,
+                storage,
+                services,
+                privilegedKeyManager: undefined,
+            })
+            const client = new StorageClient(wallet, endpointUrl)
+            await storage.addWalletStorageProvider(client)
+            await storage.makeAvailable()
+
+            const outputs = await client.listOutputs({ identityKey }, {
+                basket: '',
+                tags: [],
+                tagQueryMode: 'any',
+                includeLockingScripts: true,
+                includeTransactions: true,
+                includeCustomInstructions: true,
+                includeTags: true,
+                includeLabels: true,
+                limit: 0,
+                offset: 0,
+                seekPermission: false,
+                knownTxids: [],
+            });
+            console.log({ outputs });
         } catch (error) {
             console.log({ error });
         }
