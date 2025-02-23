@@ -41,17 +41,20 @@ class SecureDataStore {
 }
 
 interface KeyContextType {
-    key: PrivateKey | null;
+    wallet: Wallet | null;
+    storage: WalletStorageManager | null;
     authenticate: () => Promise<void>;
 }
 
 export const KeyContext = createContext<KeyContextType>({
-    key: null,
+    wallet: null,
+    storage: null,
     authenticate: async () => {},
 });
 
 export default function KeyProvider({ children }: { children: React.ReactNode }) {
-    const [key, setKey] = useState<PrivateKey | null>(null);
+    const [wallet, setWallet] = useState<Wallet | null>(null);
+    const [storage, setStorage] = useState<WalletStorageManager | null>(null);
 
     async function authenticate() {
         try {
@@ -60,12 +63,10 @@ export default function KeyProvider({ children }: { children: React.ReactNode })
             const hexKey = await SecureDataStore.getItem('key');
             if (hexKey) {
                 key = PrivateKey.fromHex(hexKey)
-                setKey(key);
             } else {
                 // Generate and store a new key with biometric access control.
                 key = PrivateKey.fromRandom();
                 await SecureDataStore.storeItem('key', key.toHex());
-                setKey(key);
             }
 
             const chain = 'main'
@@ -86,27 +87,14 @@ export default function KeyProvider({ children }: { children: React.ReactNode })
             await storage.addWalletStorageProvider(client)
             await storage.makeAvailable()
 
-            const outputs = await client.listOutputs({ identityKey }, {
-                basket: '',
-                tags: [],
-                tagQueryMode: 'any',
-                includeLockingScripts: true,
-                includeTransactions: true,
-                includeCustomInstructions: true,
-                includeTags: true,
-                includeLabels: true,
-                limit: 0,
-                offset: 0,
-                seekPermission: false,
-                knownTxids: [],
-            });
-            console.log({ outputs });
+            setWallet(wallet)
+            setStorage(storage)
         } catch (error) {
             console.log({ error });
         }
     }
 
-    const value = useMemo(() => ({ key, authenticate }), [key]);
+    const value = useMemo(() => ({ wallet, storage, authenticate }), [wallet, storage]);
 
     return <KeyContext.Provider value={value}>{children}</KeyContext.Provider>;
 }

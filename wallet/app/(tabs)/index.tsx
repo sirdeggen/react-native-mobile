@@ -7,10 +7,29 @@ import { ThemedView } from '@/components/ThemedView';
 import { useContext } from 'react';
 import { KeyContext } from '@/crypto/KeyProvider';
 import QRCode from 'react-native-qrcode-svg';
+import { StorageClient } from '@bsv/wallet-toolbox-client';
+
+async function getOutputs (client: StorageClient, identityKey: string) {
+  const outputs = await client.listOutputs({ identityKey }, {
+    basket: '',
+    tags: [],
+    tagQueryMode: 'any',
+    includeLockingScripts: true,
+    includeTransactions: true,
+    includeCustomInstructions: true,
+    includeTags: true,
+    includeLabels: true,
+    limit: 0,
+    offset: 0,
+    seekPermission: false,
+    knownTxids: [],
+  });
+  console.log({ outputs })
+}
 
 export default function HomeScreen() {
   const ctx = useContext(KeyContext);
-  const data = ctx.key ? { identityKey: ctx.key.toPublicKey().toString() } : { identityKey: '' };
+  const identityKey = ctx?.wallet?.keyDeriver?.identityKey || 'not yet authenticated';
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
@@ -26,9 +45,9 @@ export default function HomeScreen() {
       </ThemedView>
       <ThemedText onPress={ctx.authenticate} style={{ color: '#fff' }}>Authenticate</ThemedText>
       <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">{data.identityKey}</ThemedText>
+        <ThemedText type="subtitle">{identityKey}</ThemedText>
         <QRCode
-          value={data.identityKey || 'N/A'}
+          value={identityKey}
           size={200}
         />
       </ThemedView>
