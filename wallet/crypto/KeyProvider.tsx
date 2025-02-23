@@ -2,6 +2,7 @@ import { PrivateKey } from '@bsv/sdk';
 import * as SecureStore from 'expo-secure-store';
 import * as LocalAuthentication from 'expo-local-authentication';
 import 'react-native-get-random-values';
+import { createContext, useEffect, useState } from 'react';
 
 class SecureDataStore {
     /**
@@ -21,36 +22,45 @@ class SecureDataStore {
    */
     static async getItem(key: string): Promise<string | null> {
         const authResult = await LocalAuthentication.authenticateAsync({
-        promptMessage: 'Authenticate to access sensitive data',
-        cancelLabel: 'Cancel',
-        disableDeviceFallback: false,
+            promptMessage: 'Authenticate to access sensitive data',
+            cancelLabel: 'Cancel',
+            disableDeviceFallback: false,
         });
 
         if (authResult.success) {
-        return await SecureStore.getItemAsync(key);
+            return await SecureStore.getItemAsync(key);
         } else {
-        throw new Error('Authentication failed');
+            throw new Error('Authentication failed');
         }
     }
 
     static async deleteItem(key: string): Promise<void> {
         await SecureStore.deleteItemAsync(key);
     }
-
-    static async hasItem(key: string): Promise<boolean> {
-        return await SecureStore.getItemAsync(key) !== null;
-    }
 }
 
-export default async function getKey(): Promise<PrivateKey> {
-    // Try to retrieve the stored key with biometric authentication.
-    const credentials = await SecureDataStore.getItem('key');
-    if (credentials) {
-        return PrivateKey.fromWif(credentials);
-    } else {
-        // Generate and store a new key with biometric access control.
-        const newKey = PrivateKey.fromRandom();
-        await SecureDataStore.storeItem('key', newKey.toWif());
-        return newKey;
+export const KeyContext = createContext<PrivateKey | null>(null);
+
+export default function KeyProvider({ children }: { children: React.ReactNode }) {
+    const [key, setKey] = useState<PrivateKey | null>(null);
+
+    async function getKey() {
+        // Try to retrieve the stored key with biometric authentication.
+        const credentials = await SecureDataStore.getItem('key');
+        console.log({ credentials });
+        if (credentials) {
+            setKey(PrivateKey.fromWif(credentials));
+        } else {
+            // Generate and store a new key with biometric access control.
+            const newKey = PrivateKey.fromRandom();
+            await SecureDataStore.storeItem('key', newKey.toWif());
+            setKey(newKey);
+        }
     }
+
+    useEffect(() => {
+        getKey();
+    }, []);
+
+    return <KeyContext.Provider value={key}>{children}</KeyContext.Provider>;
 }
