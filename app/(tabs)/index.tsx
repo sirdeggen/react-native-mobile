@@ -4,6 +4,7 @@ import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { ThemedButton } from '@/components/ThemedButton';
 import { useContext } from 'react';
 import { KeyContext } from '@/crypto/KeyProvider';
 import QRCode from 'react-native-qrcode-svg';
@@ -31,19 +32,19 @@ export default function HomeScreen() {
   const ctx = useContext(KeyContext);
   const identityKey = ctx?.wallet?.keyDeriver?.identityKey ?? 'not yet authenticated';
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
+    <ParallaxScrollView 
+      headerBackgroundColor={{ light: '#D0D0D0', dark: '#aabbcc' }}
       headerImage={
         <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
+          source={require('@/assets/images/bsv.jpg')}
+          style={styles.backgroundImage}
+          />}
+          >
       <ThemedView style={styles.titleContainer}>
         <ThemedText type="title">Welcome!</ThemedText>
         <HelloWave />
       </ThemedView>
-      <ThemedText onPress={ctx.authenticate} style={{ color: '#fff' }}>Authenticate</ThemedText>
+      <ThemedButton onPress={ctx.authenticate} style={{ color: '#fff' }}>Authenticate</ThemedButton>
       <ThemedView style={styles.stepContainer}>
         <ThemedText type="subtitle">{identityKey}</ThemedText>
         <QRCode
@@ -72,4 +73,8 @@ const styles = StyleSheet.create({
     left: 0,
     position: 'absolute',
   },
+  backgroundImage: {
+    height: 300,
+    width: '100%',
+  }
 });
