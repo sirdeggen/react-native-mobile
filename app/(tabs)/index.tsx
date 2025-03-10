@@ -1,4 +1,4 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import { Image, StyleSheet } from 'react-native';
 
 import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
@@ -29,7 +29,7 @@ async function getOutputs (client: StorageClient, identityKey: string) {
 
 export default function HomeScreen() {
   const ctx = useContext(KeyContext);
-  const identityKey = ctx?.wallet?.keyDeriver?.identityKey || 'not yet authenticated';
+  const identityKey = ctx?.wallet?.keyDeriver?.identityKey ?? 'not yet authenticated';
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}

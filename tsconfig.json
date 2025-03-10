@@ -6,7 +6,20 @@
       "@/*": [
         "./*"
       ]
-    }
+    },
+    "target": "esnext",
+    "module": "commonjs",
+    "lib": ["es2017", "dom"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "isolatedModules": true,
+    "jsx": "react-native",
+    "resolveJsonModule": true,
+    "types": ["jest", "node"]
   },
   "include": [
     "**/*.ts",
