@@ -30,7 +30,7 @@ async function getOutputs (client: StorageClient, identityKey: string) {
 
 export default function HomeScreen() {
   const ctx = useContext(KeyContext);
-  const identityKey = ctx?.wallet?.keyDeriver?.identityKey ?? 'not yet authenticated';
+  const identityKey = ctx?.wallet?.keyDeriver?.identityKey ?? null;
   return (
     <ParallaxScrollView 
       headerBackgroundColor={{ light: '#D0D0D0', dark: '#aabbcc' }}
@@ -40,18 +40,16 @@ export default function HomeScreen() {
           style={styles.backgroundImage}
           />}
           >
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedButton onPress={ctx.authenticate} style={{ color: '#fff' }}>Authenticate</ThemedButton>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">{identityKey}</ThemedText>
-        <QRCode
-          value={identityKey}
-          size={200}
-        />
-      </ThemedView>
+      {identityKey 
+        ? 
+        <ThemedView style={styles.stepContainer}>
+          <QRCode
+            value={identityKey}
+            size={320}
+          />
+          <ThemedText type="default">{identityKey}</ThemedText>
+        </ThemedView>
+        : <ThemedButton onPress={ctx.authenticate} title="Authenticate" /> }
     </ParallaxScrollView>
   );
 }
