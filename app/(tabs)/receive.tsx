@@ -36,7 +36,7 @@ export default function HomeScreen() {
       headerBackgroundColor={{ light: '#D0D0D0', dark: '#aabbcc' }}
       headerImage={
         <Image
-          source={require('@/assets/images/bsv.jpg')}
+          source={require('@/assets/images/down.jpg')}
           style={styles.backgroundImage}
           />}
           >
