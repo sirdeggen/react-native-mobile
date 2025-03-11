@@ -31,13 +31,7 @@ const Scanner: React.FC = () => {
                 keyID: prefix + ' ' + suffix,
             });
             // getInputs and pubkeyForChange
-            const change = w.getClientChangeKeyPair();
-            const utxos = await w.listOutputs({
-                basket: 'default',
-                include: 'entire transactions',
-                includeCustomInstructions: true,
-            })
-            console.log({ paymentOutput, change, utxos });
+            console.log({ paymentOutput });
             const createActionRes = ctx.wallet?.createAction({
                 description: 'mobile p2p payment',
                 inputs: [],

@@ -29,12 +29,19 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
+          title: 'Balance',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="dollarsign.arrow.circlepath" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="receive"
+        options={{
           title: 'Receive',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="arrow.down.circle" color={color} />,
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="send"
         options={{
           title: 'Send',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="arrow.up.circle" color={color} />,

@@ -1,10 +1,11 @@
 import { Image, StyleSheet } from 'react-native';
 
+import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedButton } from '@/components/ThemedButton';
-import { useContext, useState } from 'react';
+import { useContext } from 'react';
 import { KeyContext } from '@/crypto/KeyProvider';
 import QRCode from 'react-native-qrcode-svg';
 import { StorageClient } from '@bsv/wallet-toolbox-client';
@@ -28,43 +29,8 @@ async function getOutputs (client: StorageClient, identityKey: string) {
 }
 
 export default function HomeScreen() {
-  const [loading, setLoading] = useState<boolean>(false);
-  const [balance, setBalance] = useState<number>(0);
   const ctx = useContext(KeyContext);
   const identityKey = ctx?.wallet?.keyDeriver?.identityKey ?? null;
-
-  const login = async () => {
-    setLoading(true);
-    await ctx.authenticate();
-    await getBalance();
-    setLoading(false);
-  }
-
-  const getBalance = async () => {
-    try {
-      if (!ctx.wallet) return;
-      const response = await ctx.wallet.storage.listOutputs({
-            basket: '',
-            tags: [],
-            tagQueryMode: 'any',
-            includeLockingScripts: false,
-            includeTransactions: false,
-            seekPermission: false,
-            includeCustomInstructions: false,
-            includeTags: false,
-            includeLabels: false,
-            limit: 0,
-            offset: 0,
-            knownTxids: [],
-      });
-      console.log(response);
-      const balance = response?.outputs?.reduce((acc, output) => acc + output.satoshis, 0) ?? 0;
-      setBalance(balance);
-    } catch (error) {
-      console.error({ error });
-    }
-  }
-
   return (
     <ParallaxScrollView 
       headerBackgroundColor={{ light: '#D0D0D0', dark: '#aabbcc' }}
@@ -74,19 +40,19 @@ export default function HomeScreen() {
           style={styles.backgroundImage}
           />}
           >
-      {loading ? <ThemedText type="default">Loading...</ThemedText> :
-      <>
-        {
-        identityKey 
-          ? <ThemedView style={styles.stepContainer}>
-              <ThemedText type="title">Balance</ThemedText>
-              <ThemedText type="subtitle">{balance.toLocaleString()}</ThemedText>
-              <ThemedButton onPress={ctx.logout} title="Log Out" />
-            </ThemedView>
-          : <ThemedButton onPress={login} title="Authenticate" />
-        }
-      </>
-      }
+      <ThemedView style={styles.titleContainer}>
+        <ThemedText type="title">Receive Payment</ThemedText>
+      </ThemedView>
+      {identityKey 
+        ? 
+        <ThemedView style={styles.stepContainer}>
+          <QRCode
+            value={identityKey}
+            size={320}
+          />
+          <ThemedText type="default">{identityKey}</ThemedText>
+        </ThemedView>
+        : <ThemedText type="default">Please authenticate</ThemedText> }
     </ParallaxScrollView>
   );
 }

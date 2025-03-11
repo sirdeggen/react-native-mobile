@@ -44,12 +44,14 @@ interface KeyContextType {
     wallet: Wallet | null;
     storage: WalletStorageManager | null;
     authenticate: () => Promise<void>;
+    logout: () => Promise<void>;
 }
 
 export const KeyContext = createContext<KeyContextType>({
     wallet: null,
     storage: null,
     authenticate: async () => {},
+    logout: async () => {},
 });
 
 export default function KeyProvider({ children }: { children: React.ReactNode }) {
@@ -94,7 +96,17 @@ export default function KeyProvider({ children }: { children: React.ReactNode })
         }
     }
 
-    const value = useMemo(() => ({ wallet, storage, authenticate }), [wallet, storage]);
+    const logout = async () => {
+        try {
+            await SecureDataStore.deleteItem('key');
+            setWallet(null)
+            setStorage(null)
+        } catch (error) {
+            console.log({ error });
+        }
+    }
+
+    const value = useMemo(() => ({ wallet, storage, authenticate, logout }), [wallet, storage]);
 
     return <KeyContext.Provider value={value}>{children}</KeyContext.Provider>;
 }
