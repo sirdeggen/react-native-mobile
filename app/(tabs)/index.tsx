@@ -1,37 +1,20 @@
-import { Image, StyleSheet } from 'react-native';
-
+import { Alert, Image, StyleSheet, TextInput } from 'react-native';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedButton } from '@/components/ThemedButton';
-import { useContext, useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { KeyContext } from '@/crypto/KeyProvider';
-import QRCode from 'react-native-qrcode-svg';
-import { StorageClient } from '@bsv/wallet-toolbox-client';
-
-async function getOutputs (client: StorageClient, identityKey: string) {
-  const outputs = await client.listOutputs({ identityKey }, {
-    basket: '',
-    tags: [],
-    tagQueryMode: 'any',
-    includeLockingScripts: true,
-    includeTransactions: true,
-    includeCustomInstructions: true,
-    includeTags: true,
-    includeLabels: true,
-    limit: 0,
-    offset: 0,
-    seekPermission: false,
-    knownTxids: [],
-  });
-  console.log({ outputs })
-}
+import { useThemeColor } from '@/hooks/useThemeColor';
 
 export default function HomeScreen() {
   const [loading, setLoading] = useState<boolean>(false);
   const [balance, setBalance] = useState<number>(0);
+  const [keyPasted, setKeyPasted] = useState<string>('');
   const ctx = useContext(KeyContext);
   const identityKey = ctx?.wallet?.keyDeriver?.identityKey ?? null;
+  const backgroundColor = useThemeColor({}, 'background');
+  const textColor = useThemeColor({}, 'text');
 
   const login = async () => {
     setLoading(true);
@@ -40,20 +23,30 @@ export default function HomeScreen() {
     setLoading(false);
   }
 
+  const setKey = async (stringKey: string) => {
+    setLoading(true);
+    await ctx?.addKey(stringKey);
+    setLoading(false);
+  };
+
   const getBalance = async () => {
     try {
       if (!ctx.wallet) return;
+      const cleared = await ctx.wallet.listActions({
+        labels: [],
+      });
+      console.log(JSON.stringify(cleared, null, 2));
       const response = await ctx.wallet.storage.listOutputs({
-            basket: '',
+            basket: 'default',
             tags: [],
             tagQueryMode: 'any',
-            includeLockingScripts: false,
+            includeLockingScripts: true,
             includeTransactions: false,
-            seekPermission: false,
-            includeCustomInstructions: false,
-            includeTags: false,
-            includeLabels: false,
-            limit: 0,
+            seekPermission: true,
+            includeCustomInstructions: true,
+            includeTags: true,
+            includeLabels: true,
+            limit: 1000,
             offset: 0,
             knownTxids: [],
       });
@@ -75,17 +68,51 @@ export default function HomeScreen() {
           />}
           >
       {loading ? <ThemedText type="default">Loading...</ThemedText> :
-      <>
+       <ThemedView style={styles.stepContainer}>
         {
         identityKey 
-          ? <ThemedView style={styles.stepContainer}>
+          ? <>
               <ThemedText type="title">Balance</ThemedText>
               <ThemedText type="subtitle">{balance.toLocaleString()}</ThemedText>
+              <ThemedButton onPress={() => getBalance()} title="Update Balance" />
               <ThemedButton onPress={ctx.logout} title="Log Out" />
-            </ThemedView>
-          : <ThemedButton onPress={login} title="Authenticate" />
+            </>
+          : 
+            <>
+              <TextInput
+                onChangeText={hex => {
+                  if (/^[0-9A-Fa-f]+$/.test(hex) && hex.length === 64)
+                    setKeyPasted(hex)
+                  else {
+                    console.error('Invalid key: must be a 32-byte hexadecimal value.');
+                    Alert.alert('Invalid key', 'Must be a 32-byte hexadecimal value.');
+                  }
+                }}
+                style={{
+                  backgroundColor,
+                  color: textColor, 
+                  borderColor: '#ccc',
+                  borderWidth: 1,
+                  padding: 8,
+                  marginVertical: 8,
+                }}
+                placeholder="7ab10f218f73ed3cee875a47..."
+              />
+              <ThemedButton 
+                onPress={() => {
+                const hex = keyPasted.startsWith('0x') ? keyPasted.slice(2) : keyPasted;
+                if (/^[0-9A-Fa-f]+$/.test(hex) && hex.length === 64) {
+                  setKey(keyPasted);
+                } else {
+                  console.error('Invalid key: must be a 32-byte hexadecimal value.');
+                }
+                }}
+                title="Set Key"
+              />
+              <ThemedButton onPress={login} title="Authenticate" />
+            </>
         }
-      </>
+        </ThemedView>
       }
     </ParallaxScrollView>
   );

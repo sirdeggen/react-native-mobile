@@ -1,10 +1,10 @@
-import { PrivateKey, KeyDeriver } from '@bsv/sdk';
+import { PrivateKey, KeyDeriver, Utils, Random } from '@bsv/sdk';
 import * as SecureStore from 'expo-secure-store';
 import * as LocalAuthentication from 'expo-local-authentication';
 import 'react-native-get-random-values';
 import { createContext, useMemo, useState } from 'react';
 import { WalletStorageManager, Wallet, StorageClient, Services } from '@bsv/wallet-toolbox-client';
-
+import { Alert, Share } from 'react-native';
 class SecureDataStore {
     /**
      * Stores sensitive data securely using Expo's secure store.
@@ -45,6 +45,8 @@ interface KeyContextType {
     storage: WalletStorageManager | null;
     authenticate: () => Promise<void>;
     logout: () => Promise<void>;
+    addKey: (str: string) => Promise<void>;
+    makePayment: (address: string, amount: number) => Promise<void>;
 }
 
 export const KeyContext = createContext<KeyContextType>({
@@ -52,12 +54,68 @@ export const KeyContext = createContext<KeyContextType>({
     storage: null,
     authenticate: async () => {},
     logout: async () => {},
+    addKey: async () => {},
+    makePayment: async () => {},
 });
 
 export default function KeyProvider({ children }: { children: React.ReactNode }) {
     const [wallet, setWallet] = useState<Wallet | null>(null);
     const [storage, setStorage] = useState<WalletStorageManager | null>(null);
 
+    async function addKey(str: string) {
+        try {
+            const key = PrivateKey.fromHex(str);
+            await SecureDataStore.storeItem('key', key.toHex());
+        } catch (error) {
+            console.log({ error });
+        }
+    };
+
+      
+    const makePayment = async (address: string, amount: number) => {
+        try {
+            const w = wallet;
+            if (!w) {
+                throw new Error('Wallet not initialized');
+            }
+            console.log(`Sending ${amount} satoshis to ${address}`);
+            const derivationPrefix = Utils.toBase64(Random(8));
+            const derivationSuffix = Utils.toBase64(Random(8));
+            const counterparty = scannedData as string;
+            // getPubkey for output
+            const paymentOutput = await w.getPublicKey({
+                protocolID: [2, '3241645161d8'],
+                counterparty,
+                keyID: derivationPrefix + ' ' + derivationSuffix,
+            });
+            // getInputs and pubkeyForChange
+            console.log({ paymentOutput });
+            const createActionRes = await ctx.wallet?.createAction({
+                description: 'mobile p2p payment',
+                inputs: [],
+                outputs: [{
+                    lockingScript: new P2PKH().lock(PublicKey.fromString(paymentOutput.publicKey).toAddress()).toHex(),
+                    satoshis: amount,
+                    outputDescription: 'the funds',
+                    customInstructions: JSON.stringify({
+                        derivationPrefix,
+                        derivationSuffix,
+                        counterparty,
+                        type: "BRC29"
+                    })
+                }],
+                options: {
+                    randomizeOutputs: false,
+                    acceptDelayedBroadcast: false,
+                }
+            });
+            console.log({ createActionRes });
+        } catch (error) {
+            console.error('Payment failed', error);
+            Alert.alert('Payment failed', 'Please try again later.');
+        }
+    };
+    
     async function authenticate() {
         try {
             let key
@@ -68,11 +126,17 @@ export default function KeyProvider({ children }: { children: React.ReactNode })
             } else {
                 // Generate and store a new key with biometric access control.
                 key = PrivateKey.fromRandom();
-                await SecureDataStore.storeItem('key', key.toHex());
+                const newKey = key.toHex();
+                await SecureDataStore.storeItem('key', newKey);
+                // prompt the user to copy the hex to clipboard and paste somewhere secure.
+                Alert.alert('New key generated', 'Please copy this key to a secure location: ' + newKey);
+                await Share.share({
+                    message: newKey,
+                });
             }
 
             const chain = 'main'
-            const endpointUrl = 'https://store.txs.systems'
+            const endpointUrl = 'https://store.bsvb.tech'
             const rootKey = key
             const keyDeriver = new KeyDeriver(rootKey)
             const identityKey = keyDeriver.identityKey
@@ -106,7 +170,7 @@ export default function KeyProvider({ children }: { children: React.ReactNode })
         }
     }
 
-    const value = useMemo(() => ({ wallet, storage, authenticate, logout }), [wallet, storage]);
+    const value = useMemo(() => ({ addKey, makePayment, wallet, storage, authenticate, logout }), [wallet, storage]);
 
     return <KeyContext.Provider value={value}>{children}</KeyContext.Provider>;
 }
