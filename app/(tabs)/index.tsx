@@ -1,11 +1,11 @@
-import { Alert, Image, StyleSheet, TextInput } from 'react-native';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
+import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { ThemedButton } from '@/components/ThemedButton';
-import React, { useContext, useState } from 'react';
-import { KeyContext } from '@/crypto/KeyProvider';
 import { useThemeColor } from '@/hooks/useThemeColor';
+import { KeyContext } from '@/wallet/KeyProvider';
+import React, { useContext, useState } from 'react';
+import { Alert, Image, StyleSheet, TextInput } from 'react-native';
 
 export default function HomeScreen() {
   const [loading, setLoading] = useState<boolean>(false);
