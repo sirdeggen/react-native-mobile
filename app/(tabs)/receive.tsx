@@ -3,28 +3,9 @@ import { Image, StyleSheet } from 'react-native';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { useContext } from 'react';
 import { KeyContext } from '@/wallet/KeyProvider';
+import { useContext } from 'react';
 import QRCode from 'react-native-qrcode-svg';
-import { StorageClient } from '@bsv/wallet-toolbox-mobile';
-
-async function getOutputs (client: StorageClient, identityKey: string) {
-  const outputs = await client.listOutputs({ identityKey }, {
-    basket: '',
-    tags: [],
-    tagQueryMode: 'any',
-    includeLockingScripts: true,
-    includeTransactions: true,
-    includeCustomInstructions: true,
-    includeTags: true,
-    includeLabels: true,
-    limit: 0,
-    offset: 0,
-    seekPermission: false,
-    knownTxids: [],
-  });
-  console.log({ outputs })
-}
 
 export default function HomeScreen() {
   const ctx = useContext(KeyContext);

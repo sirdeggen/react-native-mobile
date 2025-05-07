@@ -1,3 +1,6 @@
+import "expo-random";
+import "react-native-get-random-values";
+
 import { KeyDeriver, P2PKH, PrivateKey, PublicKey, Random, Utils } from '@bsv/sdk';
 import { Services, StorageClient, Wallet, WalletStorageManager } from '@bsv/wallet-toolbox-mobile';
 import * as LocalAuthentication from 'expo-local-authentication';
@@ -94,7 +97,6 @@ export default function KeyProvider({ children }: { children: React.ReactNode })
             console.log({ paymentOutput });
             const createActionRes = await w.createAction({
                 description: 'mobile p2p payment',
-                inputs: [],
                 outputs: [{
                     lockingScript: new P2PKH().lock(PublicKey.fromString(paymentOutput.publicKey).toAddress()).toHex(),
                     satoshis: amount,

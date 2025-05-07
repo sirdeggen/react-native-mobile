@@ -32,23 +32,25 @@ export default function HomeScreen() {
   const getBalance = async () => {
     try {
       if (!ctx.wallet) return;
-      const cleared = await ctx.wallet.listActions({
+      const actions = await ctx.wallet.listActions({
         labels: [],
+        includeInputSourceLockingScripts: true,
+        includeInputUnlockingScripts: true,
+        includeInputs: false,
+        includeLabels: false,
+        includeOutputLockingScripts: true,
+        includeOutputs: false,
+        labelQueryMode: 'any',
+        limit: 5,
+        offset: 0,
       });
-      console.log(JSON.stringify(cleared, null, 2));
-      const response = await ctx.wallet.storage.listOutputs({
+      console.log(ctx.wallet);
+      const response = await ctx.wallet.listOutputs({
             basket: 'default',
-            tags: [],
-            tagQueryMode: 'any',
-            includeLockingScripts: true,
-            includeTransactions: false,
-            seekPermission: true,
+            include: 'entire transactions',
             includeCustomInstructions: true,
-            includeTags: true,
-            includeLabels: true,
             limit: 1000,
             offset: 0,
-            knownTxids: [],
       });
       console.log(response);
       const balance = response?.outputs?.reduce((acc, output) => acc + output.satoshis, 0) ?? 0;
