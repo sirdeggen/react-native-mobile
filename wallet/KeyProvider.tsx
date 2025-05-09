@@ -140,7 +140,7 @@ export default function KeyProvider({ children }: { children: React.ReactNode })
             }
 
             const chain = 'main'
-            const endpointUrl = 'https://store.bsvb.tech'
+            const endpointUrl = 'https://storage.babbage.systems'
             const rootKey = key
             const keyDeriver = new KeyDeriver(rootKey)
             const identityKey = keyDeriver.identityKey

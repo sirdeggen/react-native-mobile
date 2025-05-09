@@ -1,4 +1,4 @@
-import { Image, StyleSheet } from 'react-native';
+import { Alert, Clipboard, Image, StyleSheet, TouchableOpacity } from 'react-native';
 
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
@@ -25,11 +25,21 @@ export default function HomeScreen() {
       {identityKey 
         ? 
         <ThemedView style={styles.stepContainer}>
-          <QRCode
-            value={identityKey}
-            size={320}
-          />
-          <ThemedText type="default">{identityKey}</ThemedText>
+          <TouchableOpacity 
+            onPress={() => {
+              Clipboard.setString(identityKey);
+              Alert.alert('Copied', 'Public key copied to clipboard');
+            }}
+            activeOpacity={0.7}
+          >
+            <QRCode
+              value={identityKey}
+              size={320}
+            />
+            <ThemedView style={styles.copyHint}>
+              <ThemedText style={styles.copyText}>{identityKey}</ThemedText>
+            </ThemedView>
+          </TouchableOpacity>
         </ThemedView>
         : <ThemedText type="default">Please authenticate</ThemedText> }
     </ParallaxScrollView>
@@ -41,6 +51,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  copyHint: {
+    marginTop: 12,
+    alignItems: 'center',
+    padding: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    borderRadius: 8,
+  },
+  copyText: {
+    fontSize: 14,
+  },
+  copiedContainer: {
+    marginTop: 10,
+    padding: 8,
+    backgroundColor: '#4CAF50',
+    borderRadius: 8,
+    alignItems: 'center',
   },
   stepContainer: {
     gap: 8,
